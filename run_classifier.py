@@ -28,6 +28,8 @@ from classifier_utils import PaddingInputExample
 from classifier_utils import convert_single_example
 from prepro_utils import preprocess_text, encode_ids
 
+import pandas as pd
+
 
 # Model
 flags.DEFINE_string("model_config_path", default=None,
@@ -297,26 +299,34 @@ class Yelp5Processor(DataProcessor):
 
 class ImdbProcessor(DataProcessor):
   def get_labels(self):
-    return ["neg", "pos"]
+    return [0, 1]
 
   def get_train_examples(self, data_dir):
-    return self._create_examples(os.path.join(data_dir, "train"))
+    return self._create_examples(os.path.join(data_dir, "train.csv"))
 
   def get_dev_examples(self, data_dir):
-    return self._create_examples(os.path.join(data_dir, "test"))
+    return self._create_examples(os.path.join(data_dir, "test.csv"))
 
   def _create_examples(self, data_dir):
     examples = []
-    for label in ["neg", "pos"]:
-      cur_dir = os.path.join(data_dir, label)
-      for filename in tf.gfile.ListDirectory(cur_dir):
-        if not filename.endswith("txt"): continue
-
-        path = os.path.join(cur_dir, filename)
-        with tf.gfile.Open(path) as f:
-          text = f.read().strip().replace("<br />", " ")
-        examples.append(InputExample(
+    dataPath = data_dir
+    df = pd.read_csv(dataPath,header=None)
+    for index,row in df.iterrows():
+      text = row[1]
+      label = row[0]
+      examples.append(InputExample(
             guid="unused_id", text_a=text, text_b=None, label=label))
+    
+    # for label in ["neg", "pos"]:
+    #   cur_dir = os.path.join(data_dir, label)
+    #   for filename in tf.gfile.ListDirectory(cur_dir):
+    #     if not filename.endswith("txt"): continue
+
+    #     path = os.path.join(cur_dir, filename)
+    #     with tf.gfile.Open(path) as f:
+    #       text = f.read().strip().replace("<br />", " ")
+    #     examples.append(InputExample(
+    #         guid="unused_id", text_a=text, text_b=None, label=label))
     return examples
 
 
